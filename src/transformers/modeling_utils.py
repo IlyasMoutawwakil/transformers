@@ -2188,6 +2188,8 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin, GenerationMixin, PushToHubMix
         subfolder = kwargs.pop("subfolder", "")
         commit_hash = kwargs.pop("_commit_hash", None)
         variant = kwargs.pop("variant", None)
+        
+        state_dict_was_given = state_dict is not None
 
         if use_auth_token is not None:
             warnings.warn(
@@ -2681,6 +2683,7 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin, GenerationMixin, PushToHubMix
             else:
                 loaded_state_dict_keys = list(state_dict.keys())
             if low_cpu_mem_usage or use_keep_in_fp32_modules:
+                original_state_dict = state_dict
                 state_dict = None
 
         config.name_or_path = pretrained_model_name_or_path
@@ -2902,8 +2905,8 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin, GenerationMixin, PushToHubMix
                 error_msgs,
             ) = cls._load_pretrained_model(
                 model,
-                state_dict,
-                loaded_state_dict_keys,  # XXX: rename?
+                state_dict if not state_dict_was_given else original_state_dict, # if state_dict was given, we pass it through
+                loaded_state_dict_keys if not state_dict_was_given else [], # if state_dict was given, we pass an empty list to load everything from it
                 resolved_archive_file,
                 pretrained_model_name_or_path,
                 ignore_mismatched_sizes=ignore_mismatched_sizes,
